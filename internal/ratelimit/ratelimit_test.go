@@ -31,14 +31,18 @@ func TestHashTokenDifferentInputs(t *testing.T) {
 }
 
 func TestMiddlewareAllowsWithinConfiguredLimit(t *testing.T) {
+	mockNow := time.Unix(1700000000, 0).UTC()
 	rl := &Limiter{
 		maxRequests: 3,
 		window:      30 * time.Second,
 		now: func() time.Time {
-			return time.Unix(1700000000, 0).UTC()
+			return mockNow
 		},
-		increment: func(context.Context, string, time.Duration) (int64, error) {
-			return 2, nil
+		evaluate: func(ctx context.Context, key string, capacity int64, window time.Duration, nowMs int64) (int64, int64, int64, error) {
+			// Simulate an ALLOWED request. 
+			// allowed=1, remaining=2, reset in 30 seconds
+			resetMs := mockNow.Add(30 * time.Second).UnixMilli()
+			return 1, 2, resetMs, nil
 		},
 	}
 
@@ -63,20 +67,24 @@ func TestMiddlewareAllowsWithinConfiguredLimit(t *testing.T) {
 	if rec.Header().Get("X-RateLimit-Limit") != "3" {
 		t.Fatalf("unexpected X-RateLimit-Limit: %q", rec.Header().Get("X-RateLimit-Limit"))
 	}
-	if rec.Header().Get("X-RateLimit-Remaining") != "1" {
+	if rec.Header().Get("X-RateLimit-Remaining") != "2" {
 		t.Fatalf("unexpected X-RateLimit-Remaining: %q", rec.Header().Get("X-RateLimit-Remaining"))
 	}
 }
 
 func TestMiddlewareBlocksWhenOverConfiguredLimit(t *testing.T) {
+	mockNow := time.Unix(1700000000, 0).UTC()
 	rl := &Limiter{
 		maxRequests: 3,
 		window:      30 * time.Second,
 		now: func() time.Time {
-			return time.Unix(1700000000, 0).UTC()
+			return mockNow
 		},
-		increment: func(context.Context, string, time.Duration) (int64, error) {
-			return 4, nil
+		evaluate: func(ctx context.Context, key string, capacity int64, window time.Duration, nowMs int64) (int64, int64, int64, error) {
+			// Simulate a BLOCKED request.
+			// allowed=0, remaining=0, reset in 30 seconds
+			resetMs := mockNow.Add(30 * time.Second).UnixMilli()
+			return 0, 0, resetMs, nil
 		},
 	}
 

@@ -8,21 +8,22 @@ import (
 	"time"
 )
 
-func benchmarkLimiterWithIncrement(counter int64) *Limiter {
+func benchmarkLimiterWithEvaluate(allowed, remaining, resetMs int64) *Limiter {
 	return &Limiter{
 		maxRequests: 5,
 		window:      time.Minute,
 		now: func() time.Time {
 			return time.Unix(1700000000, 0).UTC()
 		},
-		increment: func(context.Context, string, time.Duration) (int64, error) {
-			return counter, nil
+		evaluate: func(context.Context, string, int64, time.Duration, int64) (int64, int64, int64, error) {
+			return allowed, remaining, resetMs, nil
 		},
 	}
 }
 
 func BenchmarkRateLimitMissingAuthorization(b *testing.B) {
-	rl := benchmarkLimiterWithIncrement(1)
+	// 1 = allowed, 4 = remaining, resetMs = arbitrary future timestamp
+	rl := benchmarkLimiterWithEvaluate(1, 4, 1700000060000)
 	h := rl.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -40,7 +41,7 @@ func BenchmarkRateLimitMissingAuthorization(b *testing.B) {
 }
 
 func BenchmarkRateLimitInvalidAuthorizationPrefix(b *testing.B) {
-	rl := benchmarkLimiterWithIncrement(1)
+	rl := benchmarkLimiterWithEvaluate(1, 4, 1700000060000)
 	h := rl.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
