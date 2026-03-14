@@ -310,24 +310,83 @@ func isIgnorableIndexError(err error) bool {
 func (qc *QdrantClient) startSaveWorkers(workers int) {
 	for i := 0; i < workers; i++ {
 		qc.wg.Add(1)
-		go func() {
-			defer qc.wg.Done()
-			for job := range qc.saveQueue {
-				ctx, cancel := context.WithTimeout(context.Background(), qc.saveTimeout)
-				err := qc.SaveWithMetadata(ctx, job.vector, job.response, job.model, job.promptHash)
-				cancel()
-				if err != nil {
-					log.Printf("⚠️ Failed to save to Qdrant: %v", err)
-				} else {
-					log.Println("💾 Saved new response to Qdrant cache!")
-				}
+		go qc.batchWorker()
+	}
+}
+
+// batchWorker pulls jobs from the queue and flushes them to Qdrant in bulk
+func (qc *QdrantClient) batchWorker() {
+	defer qc.wg.Done()
+
+	const maxBatchSize = 10
+	const flushInterval = 500 * time.Millisecond
+
+	ticker := time.NewTicker(flushInterval)
+	defer ticker.Stop()
+
+	batch := make([]*qdrant.PointStruct, 0, maxBatchSize)
+
+	flush := func() {
+		if len(batch) == 0 {
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), qc.saveTimeout)
+		defer cancel()
+
+		wait := false
+		_, err := qc.client.Upsert(ctx, &qdrant.UpsertPoints{
+			CollectionName: CollectionName,
+			Wait:           &wait,
+			Points:         batch,
+		})
+
+		if err != nil {
+			log.Printf("⚠️ Qdrant batch upsert failed: %v", err)
+		} else {
+			log.Printf("💾 Successfully bulk-saved %d cache entries to Qdrant", len(batch))
+		}
+
+		batch = batch[:0]
+	}
+
+	for {
+		select {
+		case job, ok := <-qc.saveQueue:
+			if !ok {
+				flush()
+				return
 			}
-		}()
+
+			nowUnix := time.Now().Unix()
+			expiresAt := time.Now().Add(qc.cacheEntryTTL).Unix()
+
+			point := &qdrant.PointStruct{
+				Id:      qdrant.NewIDUUID(uuid.New().String()),
+				Vectors: qdrant.NewVectors(job.vector...),
+				Payload: qdrant.NewValueMap(map[string]any{
+					"response":        string(job.response),
+					"model":           job.model,
+					"prompt_hash":     job.promptHash,
+					"created_at_unix": nowUnix,
+					"expires_at_unix": expiresAt,
+				}),
+			}
+
+			batch = append(batch, point)
+
+			if len(batch) >= maxBatchSize {
+				flush()
+				ticker.Reset(flushInterval)
+			}
+
+		case <-ticker.C:
+			flush()
+		}
 	}
 }
 
 // EnqueueSave submits a cache-write job without blocking request completion.
-// It returns false when the queue is full.
 func (qc *QdrantClient) EnqueueSave(vector []float32, response []byte) bool {
 	qc.mu.RLock()
 	defer qc.mu.RUnlock()
