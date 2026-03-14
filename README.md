@@ -10,16 +10,15 @@ It is designed for three outcomes:
 
 ## Key Features
 
-- Compatible routing under `/v1/*`
-- Reverse proxy to configurable upstream provider
-- Semantic cache with Ollama embeddings + Qdrant vector search
-- Model-aware and prompt-hash-aware cache matching
-- TTL-based cache lifecycle with periodic expired-entry cleanup
-- Optional payload indexing for faster filtered reads/deletes
-- Redis rate limiting with atomic increment+TTL
-- Privacy-friendly hashed token keys in Redis
-- OpenTelemetry traces + metrics (`stdout` or OTLP)
-- Hardened HTTP server/proxy timeouts and graceful shutdown
+- **Drop-in Compatibility:** Native routing support for standard `/v1/*` OpenAI-compatible API calls.
+- **Zero-Latency SSE Cache:** Intercepts, chunks, and replays Server-Sent Events to preserve the real-time LLM typing effect during cache hits.
+- **High-Throughput Ingestion:** Time-and-size bounded background worker pools execute gRPC batch upserts to Qdrant without blocking user responses.
+- **Precision Matching:** Combines semantic vector search (via Ollama) with strict model-aware and prompt-hash-aware validation.
+- **O(1) Token Bucket Rate Limiting:** Atomic Redis Lua scripts ensure memory-efficient, burst-smoothed API quotas.
+- **Privacy-First Security:** Bearer tokens are SHA-256 hashed before entering Redis memory or application logs.
+- **Automated Cache Lifecycle:** TTL-based expiration with periodic background cleanup and automatic payload indexing.
+- **Enterprise Observability:** Native OpenTelemetry (OTel) instrumentation for traces and metrics (`stdout` or OTLP).
+- **Resilient Infrastructure:** Hardened HTTP proxy timeouts, fail-open database degradation, and graceful connection draining on shutdown.
 
 ## Table of Contents
 
