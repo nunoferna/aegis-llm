@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -18,35 +19,36 @@ func NewHandler(cfg *config.Config) (http.Handler, error) {
 		return nil, fmt.Errorf("invalid upstream base URL: %q", cfg.UpstreamBaseURL)
 	}
 
-	// Go's standard library provides a robust Reverse Proxy out of the box!
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.Transport = &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		MaxIdleConns:          200,
-		MaxIdleConnsPerHost:   100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		ResponseHeaderTimeout: 60 * time.Second,
-	}
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		http.Error(w, "Upstream LLM provider unavailable", http.StatusBadGateway)
-	}
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			// SetURL routes the request to our target while preserving the client's requested path
+			pr.SetURL(target)
 
-	// The Director is a function that modifies the request *before* it is sent out.
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		// Run the default director to set up the basic URL routing
-		originalDirector(req)
+			// Overwrite the Host header. Many firewalls (like Cloudflare) will block
+			// requests if the Host header doesn't match the destination IP.
+			pr.Out.Host = target.Host
 
-		// Overwrite the Host header. Many firewalls (like Cloudflare) will block
-		// requests if the Host header doesn't match the destination IP.
-		req.Host = target.Host
+			// Inject upstream API key securely. This cannot be stripped by a malicious client.
+			if cfg.UpstreamAPIKey != "" {
+				pr.Out.Header.Set("Authorization", "Bearer "+cfg.UpstreamAPIKey)
+			}
 
-		// Inject upstream API key only when configured.
-		if cfg.UpstreamAPIKey != "" {
-			req.Header.Set("Authorization", "Bearer "+cfg.UpstreamAPIKey)
-		}
+			// Safely handle X-Forwarded-For, Host, and Proto headers to prevent IP spoofing
+			pr.SetXForwarded()
+		},
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			MaxIdleConns:          200,
+			MaxIdleConnsPerHost:   100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			ResponseHeaderTimeout: 60 * time.Second,
+		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("⚠️ Upstream proxy error: %v", err)
+			http.Error(w, "Upstream LLM provider unavailable", http.StatusBadGateway)
+		},
 	}
 
 	return proxy, nil
