@@ -20,7 +20,6 @@ import (
 func main() {
 	cfg := config.Load()
 
-	// 1. Initialize OpenTelemetry
 	shutdown, err := telemetry.InitProvider(telemetry.Options{
 		Exporter:         cfg.TelemetryExporter,
 		OTLPEndpoint:     cfg.TelemetryOTLPEndpoint,
@@ -33,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize OpenTelemetry: %v", err)
 	}
-	// Ensure we flush all telemetry data before the app closes
+
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -65,7 +64,6 @@ func main() {
 	}
 	defer qClient.Close()
 
-	// Initialize Redis Rate Limiter
 	rateLimiter, err := ratelimit.NewLimiterWithOptions(cfg.RedisHost, cfg.RedisPort, ratelimit.Options{
 		MaxRequests: cfg.RateLimitMaxRequests,
 		Window:      cfg.RateLimitWindow,
@@ -74,7 +72,6 @@ func main() {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
 
-	// 2. Initialize our Reverse Proxy Handler
 	llmProxy, err := proxy.NewHandler(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize proxy handler: %v", err)
@@ -82,18 +79,13 @@ func main() {
 
 	cachedProxy := qClient.Middleware(llmProxy)
 
-	// 3. Wrap the Cache with the Redis Rate Limiter (Tollbooth)
 	protectedProxy := rateLimiter.Middleware(cachedProxy)
 
-	// 4. Wrap the Proxy with OpenTelemetry Middleware
-	// This automatically creates traces and metrics for every incoming request!
 	instrumentedProxy := otelhttp.NewHandler(protectedProxy, "llm_gateway_request")
 
-	// 5. Setup Router
 	mux := http.NewServeMux()
 	mux.Handle("/v1/", instrumentedProxy)
 
-	// 6. Start the Server with Graceful Shutdown (Senior Engineer best practice)
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           mux,
@@ -111,7 +103,6 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal (Ctrl+C)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	<-ctx.Done()

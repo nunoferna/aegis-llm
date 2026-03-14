@@ -110,7 +110,6 @@ func NewQdrantClient(host string, port int, opts ClientOptions) (*QdrantClient, 
 		return nil, fmt.Errorf("invalid vector size: %d", vectorSize)
 	}
 
-	// 1. Connect to Qdrant via gRPC
 	client, err := qdrant.NewClient(&qdrant.Config{
 		Host: host,
 		Port: port,
@@ -135,7 +134,6 @@ func NewQdrantClient(host string, port int, opts ClientOptions) (*QdrantClient, 
 	}
 	qc.initCleanupMetrics()
 
-	// 2. Ensure our caching collection exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -150,7 +148,7 @@ func NewQdrantClient(host string, port int, opts ClientOptions) (*QdrantClient, 
 			CollectionName: CollectionName,
 			VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
 				Size:     uint64(vectorSize),
-				Distance: qdrant.Distance_Cosine, // Perfect for semantic text similarity
+				Distance: qdrant.Distance_Cosine,
 			}),
 		})
 		if err != nil {
@@ -380,7 +378,7 @@ func (qc *QdrantClient) enqueue(vector []float32, response []byte, model string,
 
 // Search looks for a semantically similar prompt in the database.
 func (qc *QdrantClient) Search(ctx context.Context, vector []float32, model string, promptHash string) (bool, []byte) {
-	// We want a minimum cosine similarity of 90%
+
 	threshold := float32(0.90)
 	limit := uint64(qc.searchLimit)
 
@@ -393,7 +391,7 @@ func (qc *QdrantClient) Search(ctx context.Context, vector []float32, model stri
 	})
 
 	if err != nil || len(searchResult) == 0 {
-		return false, nil // Cache Miss
+		return false, nil
 	}
 
 	var bestModelHit *qdrant.ScoredPoint

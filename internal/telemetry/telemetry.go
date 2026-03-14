@@ -66,7 +66,6 @@ func InitProvider(opts Options) (func(context.Context) error, error) {
 		}
 	}
 
-	// 1. Define the Resource (Who are we?)
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
 			semconv.ServiceName(opts.ServiceName),
@@ -135,13 +134,11 @@ func InitProvider(opts Options) (func(context.Context) error, error) {
 	)
 	otel.SetMeterProvider(meterProvider)
 
-	// 4. Setup Propagator (Ensures trace IDs travel across microservices)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
 	))
 
-	// Return a combined shutdown function
 	shutdown := func(c context.Context) error {
 		var err error
 		if err = tracerProvider.Shutdown(c); err != nil {
