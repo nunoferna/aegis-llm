@@ -62,6 +62,8 @@ type QdrantClient struct {
 	cleanupErrorCounter       metric.Int64Counter
 	cleanupDurationHistogram  metric.Float64Histogram
 	wg                        sync.WaitGroup
+	mu                        sync.RWMutex
+	isClosed                  bool
 }
 
 // NewQdrantClient connects to the vector DB and ensures the collection exists
@@ -329,6 +331,13 @@ func (qc *QdrantClient) startSaveWorkers(workers int) {
 // EnqueueSave submits a cache-write job without blocking request completion.
 // It returns false when the queue is full.
 func (qc *QdrantClient) EnqueueSave(vector []float32, response []byte) bool {
+	qc.mu.RLock()
+	defer qc.mu.RUnlock()
+
+	if qc.isClosed {
+		return false
+	}
+
 	job := saveJob{vector: vector, response: response}
 	select {
 	case qc.saveQueue <- job:
@@ -339,6 +348,13 @@ func (qc *QdrantClient) EnqueueSave(vector []float32, response []byte) bool {
 }
 
 func (qc *QdrantClient) EnqueueSaveWithMetadata(vector []float32, response []byte, model string, promptHash string) bool {
+	qc.mu.RLock()
+	defer qc.mu.RUnlock()
+
+	if qc.isClosed {
+		return false
+	}
+
 	job := saveJob{vector: vector, response: response, model: model, promptHash: promptHash}
 	select {
 	case qc.saveQueue <- job:
@@ -454,7 +470,12 @@ func (qc *QdrantClient) Close() {
 	if qc.cleanupEnabled {
 		close(qc.cleanupStop)
 	}
+
+	qc.mu.Lock()
+	qc.isClosed = true
 	close(qc.saveQueue)
+	qc.mu.Unlock()
+
 	qc.wg.Wait()
 	qc.client.Close()
 }

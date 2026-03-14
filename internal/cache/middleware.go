@@ -129,6 +129,11 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 		// Pass the request to the proxy using our interceptor instead of the normal writer
 		next.ServeHTTP(capturer, r)
 
+		if r.Context().Err() != nil {
+			log.Println("⚠️ Client disconnected early, dropping cache write to prevent corruption")
+			return
+		}
+
 		// 7. Save the captured response to Qdrant asynchronously
 		// (so we don't block the user from getting their response)
 		if capturer.statusCode == http.StatusOK && !capturer.overLimit {
