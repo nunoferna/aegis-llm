@@ -1,36 +1,31 @@
 # STAGE 1: Builder
-# Use the official Golang image to build the binary
-FROM golang:1.26-alpine AS builder
+FROM golang:1.26-alpine@sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the go.mod and go.sum files first (for efficient layer caching)
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of the source code
 COPY . .
 
-# Build the Go binary securely
-# CGO_ENABLED=0 ensures it's a static binary with no external C dependencies
-# -ldflags="-w -s" strips debugging info to make the binary incredibly small
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o aegis-gateway ./cmd/aegis
 
 # STAGE 2: Runner
-# Use a distroless or alpine image for a tiny, secure production footprint
-FROM alpine:latest
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:a9329520abc449e3b14d5bc3a6ffae065bdde0f02667fa10880c49b35c109fd1
 
-# Add CA certificates so the proxy can securely call HTTPS upstream APIs
-RUN apk --no-cache add ca-certificates
+LABEL org.opencontainers.image.title="aegis-llm" \
+    org.opencontainers.image.description="LLM Gateway with semantic caching and rate limiting" \
+    org.opencontainers.image.source="https://github.com/nunoferna/aegis-llm" \
+    org.opencontainers.image.licenses="Apache-2.0"
 
-WORKDIR /root/
+ENV TMPDIR=/tmp
+VOLUME ["/tmp"]
 
-# Copy the compiled binary from the builder stage
-COPY --from=builder /app/aegis-gateway .
+WORKDIR /
 
-# Expose our proxy and metrics port
+COPY --from=builder --chown=nonroot:nonroot /app/aegis-gateway /aegis-gateway
+
 EXPOSE 8080
 
-# Command to run the executable
-CMD ["./aegis-gateway"]
+USER nonroot:nonroot
+ENTRYPOINT ["/aegis-gateway"]

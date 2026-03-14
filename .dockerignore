@@ -1,0 +1,20 @@
+# Git and version control
+.git
+.gitignore
+.github/
+
+# IDE and local configuration
+.idea/
+.vscode/
+.env
+*.local
+
+# Infrastructure and local storage
+qdrant_storage/
+redis_data/
+
+# Documentation and irrelevant files
+README.md
+LICENSE
+Dockerfile
+docker-compose.yml
