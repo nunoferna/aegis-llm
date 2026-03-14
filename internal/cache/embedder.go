@@ -2,10 +2,28 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
+
+type EmbedderConfig struct {
+	URL     string
+	Model   string
+	Timeout time.Duration
+}
+
+var embeddingConfig EmbedderConfig
+
+var embeddingHTTPClient *http.Client
+
+func ConfigureEmbedder(cfg EmbedderConfig) {
+	embeddingConfig = cfg
+
+	embeddingHTTPClient = &http.Client{Timeout: embeddingConfig.Timeout}
+}
 
 // OllamaEmbeddingReq maps to Ollama's /api/embeddings endpoint payload
 type OllamaEmbeddingReq struct {
@@ -19,10 +37,13 @@ type OllamaEmbeddingResp struct {
 }
 
 // GetEmbedding sends text to Ollama and returns the 384-dimensional vector.
-// Note: In a production app, the URL "http://localhost:11434" would come from your config!
-func GetEmbedding(prompt string) ([]float32, error) {
+func GetEmbedding(ctx context.Context, prompt string) ([]float32, error) {
+	if embeddingHTTPClient == nil || embeddingConfig.URL == "" || embeddingConfig.Model == "" || embeddingConfig.Timeout <= 0 {
+		return nil, fmt.Errorf("embedder is not configured")
+	}
+
 	reqBody := OllamaEmbeddingReq{
-		Model:  "all-minilm", // The fast embedding model we downloaded
+		Model:  embeddingConfig.Model,
 		Prompt: prompt,
 	}
 
@@ -31,8 +52,14 @@ func GetEmbedding(prompt string) ([]float32, error) {
 		return nil, fmt.Errorf("failed to marshal embedding request: %w", err)
 	}
 
-	// Call the local Ollama embedding API
-	resp, err := http.Post("http://localhost:11434/api/embeddings", "application/json", bytes.NewBuffer(jsonData))
+	// Build a request with context so upstream cancellation/timeout is respected.
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, embeddingConfig.URL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to build embedding request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := embeddingHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call embedding API: %w", err)
 	}
@@ -48,4 +75,16 @@ func GetEmbedding(prompt string) ([]float32, error) {
 	}
 
 	return embedResp.Embedding, nil
+}
+
+// GetEmbeddingVectorSize probes the configured embedding model and returns its vector dimension.
+func GetEmbeddingVectorSize(ctx context.Context) (int, error) {
+	embedding, err := GetEmbedding(ctx, "vector-size-probe")
+	if err != nil {
+		return 0, err
+	}
+	if len(embedding) == 0 {
+		return 0, fmt.Errorf("embedding API returned an empty vector")
+	}
+	return len(embedding), nil
 }

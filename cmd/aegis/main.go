@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/nunoferna/aegis-llm/internal/cache"
@@ -20,7 +21,15 @@ func main() {
 	cfg := config.Load()
 
 	// 1. Initialize OpenTelemetry
-	shutdown, err := telemetry.InitProvider()
+	shutdown, err := telemetry.InitProvider(telemetry.Options{
+		Exporter:         cfg.TelemetryExporter,
+		OTLPEndpoint:     cfg.TelemetryOTLPEndpoint,
+		OTLPInsecure:     cfg.TelemetryOTLPInsecure,
+		MetricInterval:   cfg.TelemetryMetricInterval,
+		TraceSampleRatio: cfg.TelemetryTraceSampleRatio,
+		ServiceName:      cfg.ServiceName,
+		ServiceVersion:   cfg.ServiceVersion,
+	})
 	if err != nil {
 		log.Fatalf("Failed to initialize OpenTelemetry: %v", err)
 	}
@@ -31,20 +40,45 @@ func main() {
 		_ = shutdown(ctx)
 	}()
 
-	qClient, err := cache.NewQdrantClient("localhost", 6334)
+	cache.ConfigureEmbedder(cache.EmbedderConfig{
+		URL:     cfg.EmbeddingURL,
+		Model:   cfg.EmbeddingModel,
+		Timeout: cfg.EmbeddingTimeout,
+	})
+
+	qClient, err := cache.NewQdrantClient(cfg.QdrantHost, cfg.QdrantPort, cache.ClientOptions{
+		SaveQueueSize:             cfg.CacheSaveQueueSize,
+		SaveWorkers:               cfg.CacheSaveWorkers,
+		SaveTimeout:               cfg.CacheSaveTimeout,
+		VectorSize:                cfg.CacheVectorSize,
+		MaxCacheableBodyBytes:     cfg.MaxCacheableBodyBytes,
+		MaxCacheableResponseBytes: cfg.MaxCacheableResponseBytes,
+		CacheEntryTTL:             cfg.CacheEntryTTL,
+		SearchLimit:               cfg.CacheSearchLimit,
+		CleanupInterval:           cfg.CacheCleanupInterval,
+		CleanupTimeout:            cfg.CacheCleanupTimeout,
+		CleanupEnabled:            cfg.CacheCleanupEnabled,
+		IndexPayloadFields:        cfg.CacheIndexPayloadFields,
+	})
 	if err != nil {
 		log.Fatalf("Failed to connect to Qdrant: %v", err)
 	}
 	defer qClient.Close()
 
 	// Initialize Redis Rate Limiter
-	rateLimiter, err := ratelimit.NewLimiter("localhost", "6379")
+	rateLimiter, err := ratelimit.NewLimiterWithOptions(cfg.RedisHost, cfg.RedisPort, ratelimit.Options{
+		MaxRequests: cfg.RateLimitMaxRequests,
+		Window:      cfg.RateLimitWindow,
+	})
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
 
 	// 2. Initialize our Reverse Proxy Handler
-	llmProxy := proxy.NewHandler(cfg)
+	llmProxy, err := proxy.NewHandler(cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize proxy handler: %v", err)
+	}
 
 	cachedProxy := qClient.Middleware(llmProxy)
 
@@ -61,8 +95,13 @@ func main() {
 
 	// 6. Start the Server with Graceful Shutdown (Senior Engineer best practice)
 	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: mux,
+		Addr:              ":" + cfg.Port,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      180 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
 
 	go func() {
@@ -73,10 +112,12 @@ func main() {
 	}()
 
 	// Wait for interrupt signal (Ctrl+C)
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	<-ctx.Done()
 
 	log.Println("Shutting down gracefully, flushing telemetry data...")
-	_ = srv.Shutdown(context.Background())
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_ = srv.Shutdown(shutdownCtx)
 }

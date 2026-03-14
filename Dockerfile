@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o aegis-gateway ./cmd/ae
 # Use a distroless or alpine image for a tiny, secure production footprint
 FROM alpine:latest
 
-# Add CA certificates so the proxy can securely call HTTPS APIs (like OpenAI)
+# Add CA certificates so the proxy can securely call HTTPS upstream APIs
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
