@@ -1,13 +1,16 @@
 package cache
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 var getEmbedding = GetEmbedding
@@ -47,8 +50,15 @@ func (rc *responseCapturer) WriteHeader(statusCode int) {
 	rc.ResponseWriter.WriteHeader(statusCode)
 }
 
+// Flush ensures that streaming Server-Sent Events (SSE) are sent to the client immediately.
+// Go's ReverseProxy detects this interface and uses it for chunked streaming.
+func (rc *responseCapturer) Flush() {
+	if f, ok := rc.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // Middleware intercepts the request to check the vector database first.
-// We attach this as a method to our QdrantClient so it has access to the DB.
 func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ContentLength > qc.maxCacheableBodyBytes && qc.maxCacheableBodyBytes > 0 {
@@ -75,23 +85,17 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 
 		var payload UpstreamRequest
 		if err := json.Unmarshal(bodyBytes, &payload); err != nil || len(payload.Messages) == 0 {
-
-			next.ServeHTTP(w, r)
-			return
-		}
-		if payload.Stream {
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		prompt := payload.Messages[len(payload.Messages)-1].Content
-		promptHash := hashPrompt(prompt)
-		log.Printf("🧠 Intercepted Prompt: %q", prompt)
+		promptHash := hashPrompt(prompt, payload.Stream)
+		log.Printf("🧠 Intercepted Prompt: %q (Stream: %t)", prompt, payload.Stream)
 
 		vector, err := getEmbedding(r.Context(), prompt)
 		if err != nil {
 			log.Printf("⚠️ Failed to generate embedding: %v", err)
-
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -99,8 +103,25 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 		isHit, cachedResponse := qc.search(r.Context(), vector, payload.Model, promptHash)
 		if isHit {
 			log.Println("⚡ CACHE HIT! Bypassing LLM and serving from memory.")
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(cachedResponse)
+
+			if payload.Stream {
+				w.Header().Set("Content-Type", "text/event-stream")
+				w.Header().Set("Cache-Control", "no-cache")
+				w.Header().Set("Connection", "keep-alive")
+
+				scanner := bufio.NewScanner(bytes.NewReader(cachedResponse))
+				for scanner.Scan() {
+					w.Write(scanner.Bytes())
+					w.Write([]byte("\n"))
+					if f, ok := w.(http.Flusher); ok {
+						f.Flush()
+					}
+					time.Sleep(1 * time.Millisecond)
+				}
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(cachedResponse)
+			}
 			return
 		}
 
@@ -131,7 +152,8 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func hashPrompt(prompt string) string {
-	sum := sha256.Sum256([]byte(prompt))
+func hashPrompt(prompt string, isStream bool) string {
+	data := fmt.Sprintf("%s|stream:%t", prompt, isStream)
+	sum := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(sum[:16])
 }
