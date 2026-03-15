@@ -37,7 +37,9 @@ const (
 // Config holds all the environment-level configuration for our Gateway.
 type Config struct {
 	Port                 string
-	UpstreamAPIKey       string
+	OpenAIAPIKey         string
+	AnthropicAPIKey      string
+	GeminiAPIKey         string
 	UpstreamBaseURL      string
 	QdrantHost           string
 	QdrantPort           int
@@ -76,7 +78,9 @@ type Config struct {
 func Load() *Config {
 	cfg := &Config{
 		Port:                 getEnvOrDefault("PORT", "8080"),
-		UpstreamAPIKey:       os.Getenv("UPSTREAM_API_KEY"),
+		OpenAIAPIKey:         os.Getenv("OPENAI_API_KEY"),
+		AnthropicAPIKey:      os.Getenv("ANTHROPIC_API_KEY"),
+		GeminiAPIKey:         os.Getenv("GEMINI_API_KEY"),
 		UpstreamBaseURL:      getEnvOrDefault("UPSTREAM_BASE_URL", DefaultUpstreamBaseURL),
 		QdrantHost:           getEnvOrDefault("QDRANT_HOST", "localhost"),
 		QdrantPort:           getEnvIntOrDefault("QDRANT_PORT", 6334),
@@ -85,9 +89,9 @@ func Load() *Config {
 		RateLimitMaxRequests: getEnvInt64OrDefault("RATE_LIMIT_MAX_REQUESTS", DefaultRateLimitMaxRequests),
 		RateLimitWindow:      getEnvDurationOrDefault("RATE_LIMIT_WINDOW", DefaultRateLimitWindow),
 
-		EmbeddingURL:     getEnvOrDefault("OLLAMA_EMBEDDING_URL", DefaultEmbeddingURL),
-		EmbeddingModel:   getEnvOrDefault("OLLAMA_EMBEDDING_MODEL", DefaultEmbeddingModel),
-		EmbeddingTimeout: getEnvDurationOrDefault("OLLAMA_EMBEDDING_TIMEOUT", DefaultEmbeddingTimeout),
+		EmbeddingURL:     getEnvOrDefault("EMBEDDING_URL", DefaultEmbeddingURL),
+		EmbeddingModel:   getEnvOrDefault("EMBEDDING_MODEL", DefaultEmbeddingModel),
+		EmbeddingTimeout: getEnvDurationOrDefault("EMBEDDING_TIMEOUT", DefaultEmbeddingTimeout),
 
 		CacheSaveQueueSize:        getEnvIntOrDefault("CACHE_SAVE_QUEUE_SIZE", DefaultCacheSaveQueueSize),
 		CacheSaveWorkers:          getEnvIntOrDefault("CACHE_SAVE_WORKERS", DefaultCacheSaveWorkers),
@@ -111,8 +115,8 @@ func Load() *Config {
 		ServiceVersion:            getEnvOrDefault("OTEL_SERVICE_VERSION", DefaultServiceVersion),
 	}
 
-	if cfg.UpstreamAPIKey == "" {
-		log.Printf("No upstream API key configured (UPSTREAM_API_KEY). Continuing without Authorization injection")
+	if cfg.OpenAIAPIKey == "" {
+		log.Printf("No OpenAI API key configured (OPENAI_API_KEY). Continuing without Authorization injection")
 	}
 
 	return cfg

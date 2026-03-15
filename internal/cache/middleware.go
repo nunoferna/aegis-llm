@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/nunoferna/aegis-llm/internal/providers"
 )
 
 var getEmbedding = GetEmbedding
@@ -83,15 +84,16 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		var payload UpstreamRequest
-		if err := json.Unmarshal(bodyBytes, &payload); err != nil || len(payload.Messages) == 0 {
+		provider := providers.DetectProvider(r)
+
+		prompt, model, isStream, err := provider.ParseRequest(r, bodyBytes)
+		if err != nil || prompt == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		prompt := payload.Messages[len(payload.Messages)-1].Content
-		promptHash := hashPrompt(prompt, payload.Stream)
-		log.Printf("🧠 Intercepted Prompt: %q (Stream: %t)", prompt, payload.Stream)
+		promptHash := hashPrompt(prompt, isStream)
+		log.Printf("🧠 Intercepted Prompt: %q (Model: %s, Stream: %t)", prompt, model, isStream)
 
 		vector, err := getEmbedding(r.Context(), prompt)
 		if err != nil {
@@ -100,11 +102,11 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		isHit, cachedResponse := qc.search(r.Context(), vector, payload.Model, promptHash)
+		isHit, cachedResponse := qc.search(r.Context(), vector, model, promptHash)
 		if isHit {
 			log.Println("⚡ CACHE HIT! Bypassing LLM and serving from memory.")
 
-			if payload.Stream {
+			if isStream {
 				w.Header().Set("Content-Type", "text/event-stream")
 				w.Header().Set("Cache-Control", "no-cache")
 				w.Header().Set("Connection", "keep-alive")
@@ -142,7 +144,7 @@ func (qc *QdrantClient) Middleware(next http.Handler) http.Handler {
 		}
 
 		if capturer.statusCode == http.StatusOK && !capturer.overLimit {
-			if !qc.enqueue(vector, capturer.body.Bytes(), payload.Model, promptHash) {
+			if !qc.enqueue(vector, capturer.body.Bytes(), model, promptHash) {
 				log.Println("⚠️ Cache save queue is full, dropping async cache write")
 			}
 		}

@@ -43,8 +43,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Port != "8080" {
 		t.Fatalf("expected default port 8080, got %s", cfg.Port)
 	}
-	if cfg.UpstreamAPIKey != "" {
-		t.Fatalf("expected empty upstream key by default, got %q", cfg.UpstreamAPIKey)
+	if cfg.OpenAIAPIKey != "" {
+		t.Fatalf("expected empty OpenAI API key by default, got %q", cfg.OpenAIAPIKey)
 	}
 	if cfg.UpstreamBaseURL != "http://localhost:11434" {
 		t.Fatalf("unexpected default upstream base URL: %s", cfg.UpstreamBaseURL)
@@ -127,7 +127,7 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadParsesOverridesAndFallbacks(t *testing.T) {
-	t.Setenv("UPSTREAM_API_KEY", "upstream-key")
+	t.Setenv("OPENAI_API_KEY", "upstream-key")
 	t.Setenv("PORT", "9000")
 	t.Setenv("UPSTREAM_BASE_URL", "https://example.org")
 	t.Setenv("QDRANT_HOST", "qdrant")
@@ -136,9 +136,9 @@ func TestLoadParsesOverridesAndFallbacks(t *testing.T) {
 	t.Setenv("REDIS_PORT", "6380")
 	t.Setenv("RATE_LIMIT_MAX_REQUESTS", "not-a-number")
 	t.Setenv("RATE_LIMIT_WINDOW", "30s")
-	t.Setenv("OLLAMA_EMBEDDING_URL", "http://ollama:11434/api/embeddings")
-	t.Setenv("OLLAMA_EMBEDDING_MODEL", "mxbai-embed-large")
-	t.Setenv("OLLAMA_EMBEDDING_TIMEOUT", "7s")
+	t.Setenv("EMBEDDING_URL", "http://ollama:11434/api/embeddings")
+	t.Setenv("EMBEDDING_MODEL", "mxbai-embed-large")
+	t.Setenv("EMBEDDING_TIMEOUT", "7s")
 	t.Setenv("CACHE_SAVE_QUEUE_SIZE", "2048")
 	t.Setenv("CACHE_SAVE_WORKERS", "8")
 	t.Setenv("CACHE_SAVE_TIMEOUT", "1500ms")
@@ -161,8 +161,8 @@ func TestLoadParsesOverridesAndFallbacks(t *testing.T) {
 
 	cfg := Load()
 
-	if cfg.UpstreamAPIKey != "upstream-key" {
-		t.Fatalf("expected UPSTREAM_API_KEY to be used, got %q", cfg.UpstreamAPIKey)
+	if cfg.OpenAIAPIKey != "upstream-key" {
+		t.Fatalf("expected OPENAI_API_KEY to be used, got %q", cfg.OpenAIAPIKey)
 	}
 
 	if cfg.Port != "9000" {

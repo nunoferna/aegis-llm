@@ -39,7 +39,7 @@ func TestMiddlewareAllowsWithinConfiguredLimit(t *testing.T) {
 			return mockNow
 		},
 		evaluate: func(ctx context.Context, key string, capacity int64, window time.Duration, nowMs int64) (int64, int64, int64, error) {
-			// Simulate an ALLOWED request. 
+			// Simulate an ALLOWED request.
 			// allowed=1, remaining=2, reset in 30 seconds
 			resetMs := mockNow.Add(30 * time.Second).UnixMilli()
 			return 1, 2, resetMs, nil

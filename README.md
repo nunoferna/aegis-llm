@@ -373,9 +373,11 @@ Upstream LLM API
 
 ### Upstream Auth
 
-| Variable           | Description                                   | Example  |
-| ------------------ | --------------------------------------------- | -------- |
-| `UPSTREAM_API_KEY` | Upstream provider API key injected by gateway | `sk-...` |
+| Variable            | Description                                        | Example         |
+| ------------------- | -------------------------------------------------- | --------------- |
+| `OPENAI_API_KEY`    | OpenAI provider API key injected by gateway        | `sk-...`        |
+| `ANTHROPIC_API_KEY` | Anthropic provider API key injected by gateway     | `anthropic-...` |
+| `GEMINI_API_KEY`    | Google Gemini provider API key injected by gateway | `gemini-...`    |
 
 ### Optional Core and Infrastructure
 
@@ -397,11 +399,11 @@ Upstream LLM API
 
 ### Embeddings
 
-| Variable                   | Description            | Default                                 |
-| -------------------------- | ---------------------- | --------------------------------------- |
-| `OLLAMA_EMBEDDING_URL`     | Embedding endpoint URL | `http://localhost:11434/api/embeddings` |
-| `OLLAMA_EMBEDDING_MODEL`   | Embedding model name   | `all-minilm`                            |
-| `OLLAMA_EMBEDDING_TIMEOUT` | Embedding HTTP timeout | `5s`                                    |
+| Variable            | Description            | Default                                 |
+| ------------------- | ---------------------- | --------------------------------------- |
+| `EMBEDDING_URL`     | Embedding endpoint URL | `http://localhost:11434/api/embeddings` |
+| `MBEDDING_MODEL`    | Embedding model name   | `all-minilm`                            |
+| `EMBEDDING_TIMEOUT` | Embedding HTTP timeout | `5s`                                    |
 
 ### Cache and Qdrant
 

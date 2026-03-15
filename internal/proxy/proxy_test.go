@@ -11,7 +11,7 @@ import (
 func TestNewHandlerRejectsInvalidURL(t *testing.T) {
 	cfg := &config.Config{
 		UpstreamBaseURL: "://bad-url",
-		UpstreamAPIKey:  "test-key",
+		OpenAIAPIKey:    "test-key",
 	}
 
 	h, err := NewHandler(cfg)
@@ -35,7 +35,7 @@ func TestNewHandlerInjectsAuthorizationHeader(t *testing.T) {
 
 	cfg := &config.Config{
 		UpstreamBaseURL: upstream.URL,
-		UpstreamAPIKey:  "secret-key",
+		OpenAIAPIKey:    "secret-key",
 	}
 
 	h, err := NewHandler(cfg)
