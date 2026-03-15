@@ -1,0 +1,39 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'mkdocs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    name: Build and Deploy MkDocs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material
+
+      - name: Prepare Documentation
+        run: |
+          # Copy the README to act as the homepage
+          cp README.md docs/index.md
+
+          # Fix the relative image path for MkDocs
+          sed -i 's|docs/assets/|assets/|g' docs/index.md
+
+      - name: Deploy to gh-pages
+        run: mkdocs gh-deploy --force

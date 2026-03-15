@@ -1,0 +1,22 @@
+site_name: Aegis-LLM
+site_description: LLM API Gateway with semantic caching and rate limiting.
+site_url: https://nunoferna.github.io/aegis-llm/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    scheme: slate
+    primary: black
+    accent: indigo
+
+repo_name: nunoferna/aegis-llm
+repo_url: https://github.com/nunoferna/aegis-llm
+
+nav:
+  - Home: index.md
