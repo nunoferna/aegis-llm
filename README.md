@@ -240,42 +240,46 @@ On repeated prompt/model requests, you should see cache-hit logs in gateway outp
 │   ├── cache/
 │   │   ├── embedder.go              # Ollama embedding client
 │   │   ├── middleware.go            # Cache middleware around proxy
-│   │   ├── qdrant.go                # Qdrant client, workers, cleanup, metrics
-│   │   ├── middleware_bench_test.go
-│   │   └── qdrant_bench_test.go
+│   │   ├── qdrant.go                # Qdrant client, workers, cleanup
 │   ├── config/
 │   │   ├── config.go                # Env parsing and defaults
-│   │   └── config_test.go
+│   ├── providers/
+│   │   ├── anthropic.go             # Claude payload extraction
+│   │   ├── gemini.go                # Google payload extraction
+│   │   ├── openai.go                # OpenAI/Ollama payload extraction
+│   │   └── provider.go              # Interface and dynamic routing logic
 │   ├── proxy/
-│   │   ├── proxy.go                 # Reverse proxy and upstream auth injection
-│   │   └── proxy_test.go
+│   │   ├── proxy.go                 # Reverse proxy and dynamic upstream routing
 │   ├── ratelimit/
-│   │   ├── ratelimit.go             # Redis limiter middleware
-│   │   ├── ratelimit_test.go
-│   │   └── ratelimit_bench_test.go
+│   │   ├── ratelimit.go             # Redis O(1) limiter middleware
 │   └── telemetry/
 │       └── telemetry.go             # OTEL provider setup
+├── deploy/
+│   └── charts/
+│       └── aegis-llm/               # Helm chart for Kubernetes deployment
+├── docs/
+│   └── assets/
+│       └── architecture.png         # Diagrams and visual assets
 ├── Dockerfile
 ├── go.mod
-├── go.sum
 └── README.md
 ```
 
 ### Request Lifecycle
 
-1. Request arrives at `/v1/*`
+1. Request arrives at `/v1/*` or `/v1beta/*`
 2. Rate limiter:
    - Validates `Authorization: Bearer ...`
-   - Computes hashed token key
-   - Atomically increments Redis counter with TTL
+   - Computes SHA-256 hashed token key
+   - Atomically increments Redis Token Bucket
    - Returns `401`/`429` when needed
 3. Cache middleware (for non-streaming chat-completions-style payloads):
    - Reads request body (bounded by `MAX_CACHEABLE_BODY_BYTES`)
-   - Extracts prompt and model
+   - Uses Provider Adapters to safely extract prompt and model (OpenAI, Anthropic, or Gemini)
    - Fetches embedding from Ollama
    - Searches Qdrant by vector, then applies model/hash/expiry logic
-4. Cache hit: returns cached JSON immediately
-5. Cache miss: proxies to upstream provider
+4. Cache hit: returns cached JSON (replays SSE chunks for streams)
+5. Cache miss: Proxies to the dynamically detected upstream provider
 6. Successful response capture:
    - Bounded by `MAX_CACHEABLE_RESPONSE_BYTES`
    - Enqueued for async save to Qdrant
@@ -284,6 +288,8 @@ On repeated prompt/model requests, you should see cache-hit logs in gateway outp
    - OTEL cleanup metrics are emitted
 
 ### Data Flow
+
+![Aegis-LLM Architecture Flow](docs/assets/architecture.svg)
 
 ```text
 Client
@@ -312,57 +318,41 @@ Upstream LLM API
 #### 1) Configuration (`internal/config`)
 
 - Centralized env parsing with defaults
-- Uses typed parsers for `int`, `int64`, `bool`, `duration`, `float64`
-- Invalid env values fall back safely with warning logs
-- Supports provider-agnostic `UPSTREAM_API_KEY`
-- Upstream auth injection is optional (useful for local Ollama upstreams)
+- Uses typed parsers for safe fallback behavior.
+- Loads dedicated API keys for different upstream providers (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY).
 
-#### 2) Proxy (`internal/proxy`)
+#### 2) Provider Adapters (`internal/providers`)
 
-- Validates upstream URL before startup
-- Uses hardened transport settings:
-  - max idle conns and per-host pool
-  - handshake and header timeouts
-- Injects upstream auth header only when key is configured: `Authorization: Bearer <UPSTREAM_API_KEY>`
-- Returns `502` if upstream is unavailable
+- Implements the Strategy Pattern to eliminate protocol fragmentation.
+- Dynamically detects the requested AI format based on the URL path.
+- Safely extracts prompts from complex multimodal JSON arrays without breaking the proxy passthrough.
 
-#### 3) Rate Limiter (`internal/ratelimit`)
+#### 3) Proxy (`internal/proxy`)
 
-- Per-token windowing with hashed token key
-- Redis Lua script makes increment + expiration atomic
-- Returns:
-  - `X-RateLimit-Limit`
-  - `X-RateLimit-Remaining`
-  - `X-RateLimit-Reset`
-  - `Retry-After` on `429`
-- Fails open if Redis errors occur (availability-first behavior)
+- Acts as a Transparent Proxy rather than a brittle translation layer.
+- Dynamically routes outbound traffic to official APIs (Anthropic, Google) or your default internal upstream (Ollama/vLLM).
+- Injects the correct upstream API key header on the fly.
+- Uses hardened transport settings (timeouts, connection pools).
 
-#### 4) Cache Middleware (`internal/cache/middleware.go`)
+#### 4) Rate Limiter (`internal/ratelimit`)
 
-- Only handles chat-completions-style payloads with at least one message
-- Bypasses cache for `stream=true`
-- Protects memory with body/response caps
-- Uses prompt hash to prefer exact prompt matches among semantic candidates
-- Async save queue decouples user latency from storage latency
+- O(1) Token Bucket implementation.
+- Redis Lua script makes increment + expiration atomic.
+- Fails open if Redis errors occur (availability-first behavior).
 
-#### 5) Qdrant Client (`internal/cache/qdrant.go`)
+#### 5) Cache Middleware (`internal/cache/middleware.go`)
 
-- Creates collection if missing
-- Optionally creates payload indexes:
-  - `expires_at_unix` (integer)
-  - `model` (keyword)
-  - `prompt_hash` (keyword)
-- Save worker pool performs async upserts with timeout
-- Cleanup worker:
-  - counts expired points
-  - deletes expired points
-  - emits metrics:
-    - `aegis_cache_cleanup_runs_total`
-    - `aegis_cache_cleanup_deleted_total`
-    - `aegis_cache_cleanup_errors_total`
-    - `aegis_cache_cleanup_duration_seconds`
+- Bypasses cache entirely for malformed payloads or uncacheable formats (e.g., image generation).
+- Protects memory with strict body/response caps.
+- Async save queue decouples user latency from vector DB storage latency.
 
-#### 6) Telemetry (`internal/telemetry`)
+#### 6) Qdrant Client (`internal/cache/qdrant.go`)
+
+- Auto-creates collection and payload indexes (expires_at_unix, model, prompt_hash).
+- Bounded save worker pool performs async gRPC upserts.
+- Background cleanup worker regularly sweeps expired TTL points.
+
+#### 7) Telemetry (`internal/telemetry`)
 
 - Supports `stdout` and `otlp` exporters
 - Configurable trace sample ratio and metric export interval
