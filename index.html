@@ -1,0 +1,2276 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="LLM API Gateway with semantic caching and rate limiting.">
+      
+      
+      
+        <link rel="canonical" href="https://nunoferna.github.io/aegis-llm/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Aegis-LLM</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#aegis-llm-gateway" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Aegis-LLM" class="md-header__button md-logo" aria-label="Aegis-LLM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Aegis-LLM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nunoferna/aegis-llm" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nunoferna/aegis-llm
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Aegis-LLM" class="md-nav__button md-logo" aria-label="Aegis-LLM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Aegis-LLM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nunoferna/aegis-llm" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nunoferna/aegis-llm
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tech-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tech Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Clone the Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-local-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Start Local Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-environment-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Environment Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-run-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run the Gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-verify-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Verify End-to-End
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Deep Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Deep Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuration-internalconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Configuration (internal/config)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-provider-adapters-internalproviders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Provider Adapters (internal/providers)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-proxy-internalproxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Proxy (internal/proxy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-rate-limiter-internalratelimit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Rate Limiter (internal/ratelimit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-cache-middleware-internalcachemiddlewarego" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Cache Middleware (internal/cache/middleware.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-qdrant-client-internalcacheqdrantgo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Qdrant Client (internal/cache/qdrant.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-telemetry-internaltelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Telemetry (internal/telemetry)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upstream-auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream Auth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-core-and-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Core and Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate Limiting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embeddings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-and-qdrant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache and Qdrant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Telemetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-production-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Production Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-helm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes (Helm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operational-runbook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational Runbook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upstream-auth-not-being-injected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream auth not being injected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#401-missing-or-invalid-authorization-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        401 Missing or invalid Authorization header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#429-too-many-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        429 Too Many Requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upstream-provider-unavailable-502" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream provider unavailable (502)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-misses-on-repeated-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache misses on repeated prompts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-telemetry-in-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No telemetry in collector
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tech-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tech Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Clone the Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-local-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Start Local Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-environment-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Environment Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-run-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run the Gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-verify-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Verify End-to-End
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Deep Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Deep Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuration-internalconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Configuration (internal/config)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-provider-adapters-internalproviders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Provider Adapters (internal/providers)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-proxy-internalproxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Proxy (internal/proxy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-rate-limiter-internalratelimit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Rate Limiter (internal/ratelimit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-cache-middleware-internalcachemiddlewarego" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Cache Middleware (internal/cache/middleware.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-qdrant-client-internalcacheqdrantgo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Qdrant Client (internal/cache/qdrant.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-telemetry-internaltelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Telemetry (internal/telemetry)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upstream-auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream Auth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-core-and-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Core and Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate Limiting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embeddings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-and-qdrant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache and Qdrant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Telemetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-production-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Production Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-helm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes (Helm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operational-runbook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational Runbook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upstream-auth-not-being-injected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream auth not being injected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#401-missing-or-invalid-authorization-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        401 Missing or invalid Authorization header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#429-too-many-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        429 Too Many Requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upstream-provider-unavailable-502" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream provider unavailable (502)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-misses-on-repeated-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache misses on repeated prompts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-telemetry-in-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No telemetry in collector
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="aegis-llm-gateway">Aegis-LLM Gateway</h1>
+<p>Aegis-LLM is an LLM gateway for teams that want lower latency and lower API spend without changing client integrations. It fronts upstream <code>/v1/*</code> calls, enforces Redis-backed rate limits, and serves semantically cached responses from Qdrant when possible.</p>
+<p>It is designed for three outcomes:</p>
+<ol>
+<li>Fast local setup for developers</li>
+<li>Clear understanding of internals for maintainers</li>
+<li>Predictable production deployment and operations</li>
+</ol>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Drop-in Compatibility:</strong> Native routing support for standard <code>/v1/*</code> OpenAI-compatible API calls.</li>
+<li><strong>Zero-Latency SSE Cache:</strong> Intercepts, chunks, and replays Server-Sent Events to preserve the real-time LLM typing effect during cache hits.</li>
+<li><strong>High-Throughput Ingestion:</strong> Time-and-size bounded background worker pools execute gRPC batch upserts to Qdrant without blocking user responses.</li>
+<li><strong>Precision Matching:</strong> Combines semantic vector search (via Ollama) with strict model-aware and prompt-hash-aware validation.</li>
+<li><strong>O(1) Token Bucket Rate Limiting:</strong> Atomic Redis Lua scripts ensure memory-efficient, burst-smoothed API quotas.</li>
+<li><strong>Privacy-First Security:</strong> Bearer tokens are SHA-256 hashed before entering Redis memory or application logs.</li>
+<li><strong>Automated Cache Lifecycle:</strong> TTL-based expiration with periodic background cleanup and automatic payload indexing.</li>
+<li><strong>Enterprise Observability:</strong> Native OpenTelemetry (OTel) instrumentation for traces and metrics (<code>stdout</code> or OTLP).</li>
+<li><strong>Resilient Infrastructure:</strong> Hardened HTTP proxy timeouts, fail-open database degradation, and graceful connection draining on shutdown.</li>
+</ul>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#tech-stack">Tech Stack</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#1-clone-the-repository">1. Clone the Repository</a></li>
+<li><a href="#2-install-dependencies">2. Install Dependencies</a></li>
+<li><a href="#3-start-local-infrastructure">3. Start Local Infrastructure</a></li>
+<li><a href="#4-environment-setup">4. Environment Setup</a></li>
+<li><a href="#5-run-the-gateway">5. Run the Gateway</a></li>
+<li><a href="#6-verify-end-to-end">6. Verify End-to-End</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#directory-structure">Directory Structure</a></li>
+<li><a href="#request-lifecycle">Request Lifecycle</a></li>
+<li><a href="#data-flow">Data Flow</a></li>
+<li><a href="#component-deep-dive">Component Deep Dive</a></li>
+<li><a href="#environment-variables">Environment Variables</a></li>
+<li><a href="#upstream-auth">Upstream Auth</a></li>
+<li><a href="#optional-core-and-infrastructure">Optional Core and Infrastructure</a></li>
+<li><a href="#rate-limiting">Rate Limiting</a></li>
+<li><a href="#embeddings">Embeddings</a></li>
+<li><a href="#cache-and-qdrant">Cache and Qdrant</a></li>
+<li><a href="#telemetry">Telemetry</a></li>
+<li><a href="#recommended-production-values">Recommended Production Values</a></li>
+<li><a href="#available-scripts">Available Scripts</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#deployment">Deployment</a></li>
+<li><a href="#docker-recommended">Docker (Recommended)</a></li>
+<li><a href="#kubernetes-guidance">Kubernetes Guidance</a></li>
+<li><a href="#operational-runbook">Operational Runbook</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li><strong>Language</strong>: Go 1.25+ (module), Docker build stage uses Go 1.26</li>
+<li><strong>Gateway HTTP</strong>: <code>net/http</code>, <code>httputil.ReverseProxy</code></li>
+<li><strong>Vector Cache</strong>: Qdrant via <code>github.com/qdrant/go-client</code></li>
+<li><strong>Embeddings</strong>: Ollama embeddings API</li>
+<li><strong>Rate Limiting</strong>: Redis via <code>github.com/redis/go-redis/v9</code></li>
+<li><strong>Observability</strong>: OpenTelemetry SDK + OTLP/stdout exporters</li>
+<li><strong>Containerization</strong>: Multi-stage Docker build (<code>Dockerfile</code>)</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Minimum requirements:</p>
+<ul>
+<li>Go 1.25 or newer</li>
+<li>Docker (recommended for infra dependencies)</li>
+<li>Redis (default <code>6379</code>)</li>
+<li>Qdrant gRPC endpoint (default <code>6334</code>)</li>
+<li>Ollama embeddings endpoint (default <code>http://localhost:11434/api/embeddings</code>)</li>
+<li>Upstream provider API key (if your provider requires bearer auth)</li>
+</ul>
+<p>Optional but helpful:</p>
+<ul>
+<li><code>curl</code> for local API verification</li>
+<li>OTLP collector if using <code>TELEMETRY_EXPORTER=otlp</code></li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="1-clone-the-repository">1. Clone the Repository</h3>
+<pre><code class="language-bash">git clone https://github.com/nunoferna/aegis-llm.git
+cd aegis-llm
+</code></pre>
+<h3 id="2-install-dependencies">2. Install Dependencies</h3>
+<p>Download Go module dependencies:</p>
+<pre><code class="language-bash">go mod download
+</code></pre>
+<h3 id="3-start-local-infrastructure">3. Start Local Infrastructure</h3>
+<p>If you already run Redis/Qdrant/Ollama locally, skip this section.</p>
+<p>Start Redis:</p>
+<pre><code class="language-bash">docker run --name aegis-redis --rm -p 6379:6379 redis:7-alpine
+</code></pre>
+<p>Start Qdrant:</p>
+<pre><code class="language-bash">docker run --name aegis-qdrant --rm -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.13.2
+</code></pre>
+<p>Start Ollama (if needed):</p>
+<pre><code class="language-bash">ollama serve
+</code></pre>
+<p>Pull embedding model used by default:</p>
+<pre><code class="language-bash">ollama pull all-minilm
+</code></pre>
+<h3 id="4-environment-setup">4. Environment Setup</h3>
+<p>This repository does not include <code>.env.example</code> yet. Create your own <code>.env</code> (or export variables in shell) using the template below:</p>
+<pre><code class="language-bash">cat &gt; .env &lt;&lt;'EOF'
+PORT=8080
+
+# Upstream Auth (Configure the ones you intend to use)
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GEMINI_API_KEY=your-gemini-key
+
+# Default Upstream (Used for local models like Ollama or vLLM)
+UPSTREAM_BASE_URL=http://localhost:11434
+
+# Infrastructure
+QDRANT_HOST=localhost
+QDRANT_PORT=6334
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Rate limiting
+RATE_LIMIT_MAX_REQUESTS=5
+RATE_LIMIT_WINDOW=1m
+
+# Embeddings
+EMBEDDING_URL=http://localhost:11434/api/embeddings
+EMBEDDING_MODEL=all-minilm
+EMBEDDING_TIMEOUT=5s
+
+# Cache
+CACHE_SAVE_QUEUE_SIZE=1024
+CACHE_SAVE_WORKERS=4
+CACHE_SAVE_TIMEOUT=2s
+CACHE_VECTOR_SIZE=
+MAX_CACHEABLE_BODY_BYTES=1048576
+MAX_CACHEABLE_RESPONSE_BYTES=1048576
+CACHE_ENTRY_TTL=24h
+CACHE_SEARCH_LIMIT=5
+CACHE_CLEANUP_INTERVAL=15m
+CACHE_CLEANUP_TIMEOUT=5s
+CACHE_CLEANUP_ENABLED=true
+CACHE_INDEX_PAYLOAD_FIELDS=true
+
+# Telemetry
+TELEMETRY_EXPORTER=stdout
+OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+OTEL_EXPORTER_OTLP_INSECURE=true
+OTEL_METRIC_EXPORT_INTERVAL=10s
+OTEL_TRACE_SAMPLE_RATIO=1.0
+OTEL_SERVICE_NAME=aegis-llm-gateway
+OTEL_SERVICE_VERSION=1.0.0
+EOF
+</code></pre>
+<p>Load the file in your shell:</p>
+<pre><code class="language-bash">set -a
+source .env
+set +a
+</code></pre>
+<h3 id="5-run-the-gateway">5. Run the Gateway</h3>
+<p>Run directly:</p>
+<pre><code class="language-bash">go run ./cmd/aegis
+</code></pre>
+<p>Or build then run:</p>
+<pre><code class="language-bash">go build -o aegis-gateway ./cmd/aegis
+./aegis-gateway
+</code></pre>
+<p>Expected startup log (example):</p>
+<pre><code class="language-text">🚦 Connected to Redis Rate Limiter
+🧠 Connected to existing Qdrant collection: aegis_prompt_cache
+🛡️ Aegis-LLM Gateway starting on port 8080...
+</code></pre>
+<h3 id="6-verify-end-to-end">6. Verify End-to-End</h3>
+<p>Send a non-streaming chat completion request:</p>
+<pre><code class="language-bash">curl -sS http://localhost:8080/v1/chat/completions \
+  -H &quot;Content-Type: application/json&quot; \
+  -H &quot;Authorization: Bearer dev-user-token&quot; \
+  -d '{
+    &quot;model&quot;: &quot;gpt-4.1-mini&quot;,
+    &quot;stream&quot;: false,
+    &quot;messages&quot;: [
+      {&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Explain semantic caching in one paragraph.&quot;}
+    ]
+  }'
+</code></pre>
+<p>On repeated prompt/model requests, you should see cache-hit logs in gateway output.</p>
+<h2 id="architecture">Architecture</h2>
+<h3 id="directory-structure">Directory Structure</h3>
+<pre><code class="language-text">.
+├── cmd/
+│   └── aegis/
+│       └── main.go                  # Entrypoint, wiring, graceful shutdown
+├── internal/
+│   ├── cache/
+│   │   ├── embedder.go              # Ollama embedding client
+│   │   ├── middleware.go            # Cache middleware around proxy
+│   │   ├── qdrant.go                # Qdrant client, workers, cleanup
+│   ├── config/
+│   │   ├── config.go                # Env parsing and defaults
+│   ├── providers/
+│   │   ├── anthropic.go             # Claude payload extraction
+│   │   ├── gemini.go                # Google payload extraction
+│   │   ├── openai.go                # OpenAI/Ollama payload extraction
+│   │   └── provider.go              # Interface and dynamic routing logic
+│   ├── proxy/
+│   │   ├── proxy.go                 # Reverse proxy and dynamic upstream routing
+│   ├── ratelimit/
+│   │   ├── ratelimit.go             # Redis O(1) limiter middleware
+│   └── telemetry/
+│       └── telemetry.go             # OTEL provider setup
+├── deploy/
+│   └── charts/
+│       └── aegis-llm/               # Helm chart for Kubernetes deployment
+├── docs/
+│   └── assets/
+│       └── architecture.png         # Diagrams and visual assets
+├── Dockerfile
+├── go.mod
+└── README.md
+</code></pre>
+<h3 id="request-lifecycle">Request Lifecycle</h3>
+<ol>
+<li>Request arrives at <code>/v1/*</code> or <code>/v1beta/*</code></li>
+<li>Rate limiter:</li>
+<li>Validates <code>Authorization: Bearer ...</code></li>
+<li>Computes SHA-256 hashed token key</li>
+<li>Atomically increments Redis Token Bucket</li>
+<li>Returns <code>401</code>/<code>429</code> when needed</li>
+<li>Cache middleware (for non-streaming chat-completions-style payloads):</li>
+<li>Reads request body (bounded by <code>MAX_CACHEABLE_BODY_BYTES</code>)</li>
+<li>Uses Provider Adapters to safely extract prompt and model (OpenAI, Anthropic, or Gemini)</li>
+<li>Fetches embedding from Ollama</li>
+<li>Searches Qdrant by vector, then applies model/hash/expiry logic</li>
+<li>Cache hit: returns cached JSON (replays SSE chunks for streams)</li>
+<li>Cache miss: Proxies to the dynamically detected upstream provider</li>
+<li>Successful response capture:</li>
+<li>Bounded by <code>MAX_CACHEABLE_RESPONSE_BYTES</code></li>
+<li>Enqueued for async save to Qdrant</li>
+<li>Background maintenance:</li>
+<li>Cleanup worker removes expired entries at configured interval</li>
+<li>OTEL cleanup metrics are emitted</li>
+</ol>
+<h3 id="data-flow">Data Flow</h3>
+<p><img alt="Aegis-LLM Architecture Flow" src="assets/architecture.svg" /></p>
+<pre><code class="language-text">Client
+  │
+  ▼
+HTTP /v1/*
+  │
+  ▼
+Rate Limit (Redis)
+  │
+  ▼
+Cache Middleware
+  ├── Embeddings (Ollama)
+  ├── Vector Search (Qdrant)
+  └── Async Save Queue
+  │
+  ▼
+Reverse Proxy
+  │
+  ▼
+Upstream LLM API
+</code></pre>
+<h3 id="component-deep-dive">Component Deep Dive</h3>
+<h4 id="1-configuration-internalconfig">1) Configuration (<code>internal/config</code>)</h4>
+<ul>
+<li>Centralized env parsing with defaults</li>
+<li>Uses typed parsers for safe fallback behavior.</li>
+<li>Loads dedicated API keys for different upstream providers (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY).</li>
+</ul>
+<h4 id="2-provider-adapters-internalproviders">2) Provider Adapters (<code>internal/providers</code>)</h4>
+<ul>
+<li>Implements the Strategy Pattern to eliminate protocol fragmentation.</li>
+<li>Dynamically detects the requested AI format based on the URL path.</li>
+<li>Safely extracts prompts from complex multimodal JSON arrays without breaking the proxy passthrough.</li>
+</ul>
+<h4 id="3-proxy-internalproxy">3) Proxy (<code>internal/proxy</code>)</h4>
+<ul>
+<li>Acts as a Transparent Proxy rather than a brittle translation layer.</li>
+<li>Dynamically routes outbound traffic to official APIs (Anthropic, Google) or your default internal upstream (Ollama/vLLM).</li>
+<li>Injects the correct upstream API key header on the fly.</li>
+<li>Uses hardened transport settings (timeouts, connection pools).</li>
+</ul>
+<h4 id="4-rate-limiter-internalratelimit">4) Rate Limiter (<code>internal/ratelimit</code>)</h4>
+<ul>
+<li>O(1) Token Bucket implementation.</li>
+<li>Redis Lua script makes increment + expiration atomic.</li>
+<li>Fails open if Redis errors occur (availability-first behavior).</li>
+</ul>
+<h4 id="5-cache-middleware-internalcachemiddlewarego">5) Cache Middleware (<code>internal/cache/middleware.go</code>)</h4>
+<ul>
+<li>Bypasses cache entirely for malformed payloads or uncacheable formats (e.g., image generation).</li>
+<li>Protects memory with strict body/response caps.</li>
+<li>Async save queue decouples user latency from vector DB storage latency.</li>
+</ul>
+<h4 id="6-qdrant-client-internalcacheqdrantgo">6) Qdrant Client (<code>internal/cache/qdrant.go</code>)</h4>
+<ul>
+<li>Auto-creates collection and payload indexes (expires_at_unix, model, prompt_hash).</li>
+<li>Bounded save worker pool performs async gRPC upserts.</li>
+<li>Background cleanup worker regularly sweeps expired TTL points.</li>
+</ul>
+<h4 id="7-telemetry-internaltelemetry">7) Telemetry (<code>internal/telemetry</code>)</h4>
+<ul>
+<li>Supports <code>stdout</code> and <code>otlp</code> exporters</li>
+<li>Configurable trace sample ratio and metric export interval</li>
+<li>Resource attributes include service name and version</li>
+<li>Main handler is wrapped by <code>otelhttp</code> instrumentation</li>
+</ul>
+<h2 id="environment-variables">Environment Variables</h2>
+<h3 id="upstream-auth">Upstream Auth</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPENAI_API_KEY</code></td>
+<td>OpenAI provider API key injected by gateway</td>
+<td><code>sk-...</code></td>
+</tr>
+<tr>
+<td><code>ANTHROPIC_API_KEY</code></td>
+<td>Anthropic provider API key injected by gateway</td>
+<td><code>anthropic-...</code></td>
+</tr>
+<tr>
+<td><code>GEMINI_API_KEY</code></td>
+<td>Google Gemini provider API key injected by gateway</td>
+<td><code>gemini-...</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="optional-core-and-infrastructure">Optional Core and Infrastructure</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PORT</code></td>
+<td>HTTP listen port</td>
+<td><code>8080</code></td>
+</tr>
+<tr>
+<td><code>UPSTREAM_BASE_URL</code></td>
+<td>Upstream base URL</td>
+<td><code>http://localhost:11434</code></td>
+</tr>
+<tr>
+<td><code>QDRANT_HOST</code></td>
+<td>Qdrant host</td>
+<td><code>localhost</code></td>
+</tr>
+<tr>
+<td><code>QDRANT_PORT</code></td>
+<td>Qdrant gRPC port</td>
+<td><code>6334</code></td>
+</tr>
+<tr>
+<td><code>REDIS_HOST</code></td>
+<td>Redis host</td>
+<td><code>localhost</code></td>
+</tr>
+<tr>
+<td><code>REDIS_PORT</code></td>
+<td>Redis port</td>
+<td><code>6379</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="rate-limiting">Rate Limiting</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RATE_LIMIT_MAX_REQUESTS</code></td>
+<td>Max requests per token per window</td>
+<td><code>5</code></td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_WINDOW</code></td>
+<td>Window duration (<code>time.ParseDuration</code>)</td>
+<td><code>1m</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="embeddings">Embeddings</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMBEDDING_URL</code></td>
+<td>Embedding endpoint URL</td>
+<td><code>http://localhost:11434/api/embeddings</code></td>
+</tr>
+<tr>
+<td><code>MBEDDING_MODEL</code></td>
+<td>Embedding model name</td>
+<td><code>all-minilm</code></td>
+</tr>
+<tr>
+<td><code>EMBEDDING_TIMEOUT</code></td>
+<td>Embedding HTTP timeout</td>
+<td><code>5s</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cache-and-qdrant">Cache and Qdrant</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CACHE_SAVE_QUEUE_SIZE</code></td>
+<td>Async save queue size</td>
+<td><code>1024</code></td>
+</tr>
+<tr>
+<td><code>CACHE_SAVE_WORKERS</code></td>
+<td>Number of save workers</td>
+<td><code>4</code></td>
+</tr>
+<tr>
+<td><code>CACHE_SAVE_TIMEOUT</code></td>
+<td>Timeout per save operation</td>
+<td><code>2s</code></td>
+</tr>
+<tr>
+<td><code>CACHE_VECTOR_SIZE</code></td>
+<td>Vector size override (auto-detected if unset)</td>
+<td><em>auto</em></td>
+</tr>
+<tr>
+<td><code>MAX_CACHEABLE_BODY_BYTES</code></td>
+<td>Max request bytes handled by cache middleware</td>
+<td><code>1048576</code></td>
+</tr>
+<tr>
+<td><code>MAX_CACHEABLE_RESPONSE_BYTES</code></td>
+<td>Max captured response bytes for cache saves</td>
+<td><code>1048576</code></td>
+</tr>
+<tr>
+<td><code>CACHE_ENTRY_TTL</code></td>
+<td>Entry TTL</td>
+<td><code>24h</code></td>
+</tr>
+<tr>
+<td><code>CACHE_SEARCH_LIMIT</code></td>
+<td>Candidate count per vector query</td>
+<td><code>5</code></td>
+</tr>
+<tr>
+<td><code>CACHE_CLEANUP_INTERVAL</code></td>
+<td>Cleanup worker tick interval</td>
+<td><code>15m</code></td>
+</tr>
+<tr>
+<td><code>CACHE_CLEANUP_TIMEOUT</code></td>
+<td>Cleanup run timeout</td>
+<td><code>5s</code></td>
+</tr>
+<tr>
+<td><code>CACHE_CLEANUP_ENABLED</code></td>
+<td>Enable background cleanup worker</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>CACHE_INDEX_PAYLOAD_FIELDS</code></td>
+<td>Auto-create payload indexes on startup</td>
+<td><code>true</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="telemetry">Telemetry</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TELEMETRY_EXPORTER</code></td>
+<td><code>stdout</code> or <code>otlp</code></td>
+<td><code>stdout</code></td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
+<td>OTLP gRPC endpoint</td>
+<td><code>localhost:4317</code></td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_INSECURE</code></td>
+<td>Use insecure OTLP transport</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>OTEL_METRIC_EXPORT_INTERVAL</code></td>
+<td>Metrics export period</td>
+<td><code>10s</code></td>
+</tr>
+<tr>
+<td><code>OTEL_TRACE_SAMPLE_RATIO</code></td>
+<td>Ratio from <code>0.0</code> to <code>1.0</code></td>
+<td><code>1.0</code></td>
+</tr>
+<tr>
+<td><code>OTEL_SERVICE_NAME</code></td>
+<td>Service name for telemetry resource</td>
+<td><code>aegis-llm-gateway</code></td>
+</tr>
+<tr>
+<td><code>OTEL_SERVICE_VERSION</code></td>
+<td>Service version for telemetry resource</td>
+<td><code>1.0.0</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="recommended-production-values">Recommended Production Values</h3>
+<p>Tune to workload and latency budget:</p>
+<pre><code class="language-bash">RATE_LIMIT_MAX_REQUESTS=120
+RATE_LIMIT_WINDOW=1m
+
+CACHE_SAVE_QUEUE_SIZE=8192
+CACHE_SAVE_WORKERS=16
+CACHE_SAVE_TIMEOUT=3s
+CACHE_VECTOR_SIZE=1024
+CACHE_ENTRY_TTL=12h
+CACHE_SEARCH_LIMIT=8
+
+CACHE_CLEANUP_ENABLED=true
+CACHE_CLEANUP_INTERVAL=5m
+CACHE_CLEANUP_TIMEOUT=10s
+CACHE_INDEX_PAYLOAD_FIELDS=true
+
+TELEMETRY_EXPORTER=otlp
+OTEL_TRACE_SAMPLE_RATIO=0.2
+OTEL_METRIC_EXPORT_INTERVAL=10s
+</code></pre>
+<h2 id="available-scripts">Available Scripts</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>go run ./cmd/aegis</code></td>
+<td>Run gateway directly</td>
+</tr>
+<tr>
+<td><code>go build -o aegis-gateway ./cmd/aegis</code></td>
+<td>Build executable</td>
+</tr>
+<tr>
+<td><code>./aegis-gateway</code></td>
+<td>Run built binary</td>
+</tr>
+<tr>
+<td><code>go test ./...</code></td>
+<td>Run all tests</td>
+</tr>
+<tr>
+<td><code>go test -run TestLoad ./internal/config</code></td>
+<td>Run a specific test set</td>
+</tr>
+<tr>
+<td><code>go test -bench . ./internal/cache</code></td>
+<td>Run cache benchmarks</td>
+</tr>
+<tr>
+<td><code>go test -bench . ./internal/ratelimit</code></td>
+<td>Run rate-limit benchmarks</td>
+</tr>
+<tr>
+<td><code>go vet ./...</code></td>
+<td>Run static analysis</td>
+</tr>
+<tr>
+<td><code>gofmt -w ./...</code></td>
+<td>Format code</td>
+</tr>
+<tr>
+<td><code>docker build . -t aegis-llm:local</code></td>
+<td>Build container image</td>
+</tr>
+<tr>
+<td><code>docker run ... aegis-llm:local</code></td>
+<td>Run containerized gateway</td>
+</tr>
+</tbody>
+</table>
+<h2 id="testing">Testing</h2>
+<p>Run the full suite:</p>
+<pre><code class="language-bash">go test ./...
+go vet ./...
+</code></pre>
+<p>Run package-focused checks:</p>
+<pre><code class="language-bash">go test ./internal/cache ./internal/config ./internal/proxy ./internal/ratelimit
+</code></pre>
+<p>Run benchmarks:</p>
+<pre><code class="language-bash">go test -bench . -benchmem ./internal/cache
+go test -bench . -benchmem ./internal/ratelimit
+</code></pre>
+<p>Current test areas include:</p>
+<ul>
+<li>Config parsing defaults and fallback behavior</li>
+<li>Proxy URL validation and auth header injection</li>
+<li>Rate-limit hash and middleware behavior</li>
+<li>Cache enqueue + middleware benchmarks</li>
+</ul>
+<h2 id="deployment">Deployment</h2>
+<h3 id="docker">Docker</h3>
+<p>This repository already includes a multi-stage <code>Dockerfile</code>.</p>
+<p>Build:</p>
+<pre><code class="language-bash">docker build . -t aegis-llm:local
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-bash">docker run --rm -p 8080:8080 \
+  -e UPSTREAM_API_KEY=&quot;your-upstream-provider-key&quot; \
+  -e UPSTREAM_BASE_URL=&quot;http://host.docker.internal:11434&quot; \
+  -e QDRANT_HOST=&quot;host.docker.internal&quot; \
+  -e QDRANT_PORT=&quot;6334&quot; \
+  -e REDIS_HOST=&quot;host.docker.internal&quot; \
+  -e REDIS_PORT=&quot;6379&quot; \
+  -e OLLAMA_EMBEDDING_URL=&quot;http://host.docker.internal:11434/api/embeddings&quot; \
+  -e TELEMETRY_EXPORTER=&quot;otlp&quot; \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=&quot;host.docker.internal:4317&quot; \
+  aegis-llm:local
+</code></pre>
+<p>Production deployment checklist:</p>
+<ol>
+<li>Pin image tag and digest</li>
+<li>Use secret manager for <code>UPSTREAM_API_KEY</code></li>
+<li>Set CPU/memory limits for gateway and dependencies</li>
+<li>Ensure Redis persistence policy matches durability expectations</li>
+<li>Configure Qdrant storage and backups</li>
+<li>Set OTLP endpoint and verify traces/metrics ingestion</li>
+<li>Configure rolling deploy with readiness checks at infrastructure layer</li>
+</ol>
+<h3 id="kubernetes-helm">Kubernetes (Helm)</h3>
+<p>The recommended approach for deploying Aegis-LLM to production is using the provided Helm chart. The chart utilizes Kustomize-style <code>ConfigMap</code> hashing to trigger zero-downtime rolling restarts automatically when you update your environment variables.</p>
+<p>Navigate to the charts directory:</p>
+<pre><code class="language-bash">cd deploy/charts/aegis-llm
+</code></pre>
+<p>Create a values-prod.yaml file to override defaults:</p>
+<pre><code class="language-yaml">replicaCount: 3
+config:
+RATE_LIMIT_MAX_REQUESTS: &quot;500&quot;
+RATE_LIMIT_WINDOW: &quot;1m&quot;
+CACHE_ENTRY_TTL: &quot;12h&quot;
+CACHE_SAVE_WORKERS: &quot;16&quot;
+CACHE_SAVE_QUEUE_SIZE: &quot;8192&quot;
+TELEMETRY_EXPORTER: &quot;otlp&quot;
+secrets:
+create: true
+openaiApiKey: &quot;sk-...&quot;
+anthropicApiKey: &quot;sk-ant-...&quot;
+geminiApiKey: &quot;AIza...&quot;
+</code></pre>
+<p>Install the chart to your cluster:</p>
+<pre><code class="language-bash">helm upgrade --install aegis-gateway . -f values-prod.yaml --namespace gateway-system --create-namespace
+</code></pre>
+<h3 id="operational-runbook">Operational Runbook</h3>
+<p>Monitor:</p>
+<ul>
+<li>Gateway request latency (overall and upstream)</li>
+<li>Cache hit ratio</li>
+<li>Rate-limit rejection volume</li>
+<li>Cleanup metrics:</li>
+<li><code>aegis_cache_cleanup_runs_total</code></li>
+<li><code>aegis_cache_cleanup_deleted_total</code></li>
+<li><code>aegis_cache_cleanup_errors_total</code></li>
+<li><code>aegis_cache_cleanup_duration_seconds</code></li>
+</ul>
+<p>Tune when needed:</p>
+<ul>
+<li>High gateway memory:</li>
+<li>Lower <code>MAX_CACHEABLE_BODY_BYTES</code></li>
+<li>Lower <code>MAX_CACHEABLE_RESPONSE_BYTES</code></li>
+<li>Lower <code>CACHE_SAVE_QUEUE_SIZE</code></li>
+<li>Slow cache writes:</li>
+<li>Increase <code>CACHE_SAVE_WORKERS</code></li>
+<li>Increase <code>CACHE_SAVE_TIMEOUT</code></li>
+<li>Too many cache misses:</li>
+<li>Confirm model consistency in requests</li>
+<li>Verify embedding endpoint/model correctness</li>
+<li>Increase <code>CACHE_SEARCH_LIMIT</code> carefully</li>
+<li>Expired entries not being reclaimed fast enough:</li>
+<li>Reduce <code>CACHE_CLEANUP_INTERVAL</code></li>
+<li>Increase <code>CACHE_CLEANUP_TIMEOUT</code></li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="upstream-auth-not-being-injected">Upstream auth not being injected</h3>
+<p>Symptom: Upstream returns unauthorized when using a provider that requires bearer auth.</p>
+<p>Fix:</p>
+<pre><code class="language-bash">export UPSTREAM_API_KEY=&quot;your-upstream-provider-key&quot;
+</code></pre>
+<h3 id="401-missing-or-invalid-authorization-header">401 Missing or invalid Authorization header</h3>
+<p>Cause: Client did not send <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<p>Fix:</p>
+<pre><code class="language-bash">curl ... -H &quot;Authorization: Bearer any-dev-token&quot;
+</code></pre>
+<h3 id="429-too-many-requests">429 Too Many Requests</h3>
+<p>Cause: Token exceeded configured limit in current window.</p>
+<p>Fix options:</p>
+<ol>
+<li>Increase <code>RATE_LIMIT_MAX_REQUESTS</code></li>
+<li>Use a longer <code>RATE_LIMIT_WINDOW</code></li>
+<li>Retry after <code>Retry-After</code> seconds</li>
+</ol>
+<h3 id="upstream-provider-unavailable-502">Upstream provider unavailable (502)</h3>
+<p>Cause: Invalid <code>UPSTREAM_BASE_URL</code>, networking issue, or upstream outage.</p>
+<p>Checks:</p>
+<pre><code class="language-bash">echo &quot;$UPSTREAM_BASE_URL&quot;
+curl -I &quot;$UPSTREAM_BASE_URL&quot;
+</code></pre>
+<h3 id="cache-misses-on-repeated-prompts">Cache misses on repeated prompts</h3>
+<p>Likely causes:</p>
+<ol>
+<li>Different <code>model</code> values across requests</li>
+<li><code>stream=true</code> requests bypass cache</li>
+<li>Embedding endpoint/model mismatch</li>
+<li>TTL elapsed (<code>CACHE_ENTRY_TTL</code>)</li>
+</ol>
+<h3 id="no-telemetry-in-collector">No telemetry in collector</h3>
+<p>Checks:</p>
+<pre><code class="language-bash">echo &quot;$TELEMETRY_EXPORTER&quot;
+echo &quot;$OTEL_EXPORTER_OTLP_ENDPOINT&quot;
+</code></pre>
+<p>Set OTLP mode:</p>
+<pre><code class="language-bash">export TELEMETRY_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+export OTEL_EXPORTER_OTLP_INSECURE=true
+</code></pre>
+<h2 id="contributing">Contributing</h2>
+<ol>
+<li>Create a feature branch</li>
+<li>Make focused changes</li>
+<li>Run formatting and validation:</li>
+</ol>
+<pre><code class="language-bash">gofmt -w ./...
+go test ./...
+go vet ./...
+</code></pre>
+<ol>
+<li>Open a PR with:</li>
+<li>clear summary</li>
+<li>configuration impact</li>
+<li>test evidence</li>
+</ol>
+<h2 id="license">License</h2>
+<p>This project is licensed under Apache License 2.0. See <a href="LICENSE">LICENSE</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
