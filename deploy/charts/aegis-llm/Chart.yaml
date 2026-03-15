@@ -2,5 +2,5 @@ apiVersion: v2
 name: aegis-llm
 description: An enterprise-grade LLM API Gateway with semantic caching and rate limiting.
 type: application
-version: 0.1.0
+version: 1.0.0
 appVersion: "1.0.0"
