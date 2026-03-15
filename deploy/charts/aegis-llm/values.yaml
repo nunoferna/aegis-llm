@@ -1,0 +1,36 @@
+replicaCount: 2
+
+image:
+  repository: aegis-llm # Change to your registry (e.g., ghcr.io/nunoferna/aegis-llm)
+  pullPolicy: IfNotPresent
+  tag: "local"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Gateway Configuration (Maps directly to your config.go)
+config:
+  PORT: "8080"
+  UPSTREAM_BASE_URL: "http://ollama-service.default.svc.cluster.local:11434"
+  QDRANT_HOST: "qdrant-service.default.svc.cluster.local"
+  QDRANT_PORT: "6334"
+  REDIS_HOST: "redis-service.default.svc.cluster.local"
+  REDIS_PORT: "6379"
+  RATE_LIMIT_MAX_REQUESTS: "120"
+  RATE_LIMIT_WINDOW: "1m"
+  CACHE_CLEANUP_ENABLED: "true"
+  TELEMETRY_EXPORTER: "stdout"
+
+# Secrets (In production, users would disable this and use ExternalSecrets)
+secrets:
+  create: true
+  upstreamApiKey: "" # Leave empty if auth is not required

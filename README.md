@@ -133,8 +133,12 @@ This repository does not include `.env.example` yet. Create your own `.env` (or 
 cat > .env <<'EOF'
 PORT=8080
 
-# Optional upstream auth (for providers that need bearer auth)
-UPSTREAM_API_KEY=your-upstream-provider-key
+# Upstream Auth (Configure the ones you intend to use)
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GEMINI_API_KEY=your-gemini-key
+
+# Default Upstream (Used for local models like Ollama or vLLM)
 UPSTREAM_BASE_URL=http://localhost:11434
 
 # Infrastructure
@@ -148,9 +152,9 @@ RATE_LIMIT_MAX_REQUESTS=5
 RATE_LIMIT_WINDOW=1m
 
 # Embeddings
-OLLAMA_EMBEDDING_URL=http://localhost:11434/api/embeddings
-OLLAMA_EMBEDDING_MODEL=all-minilm
-OLLAMA_EMBEDDING_TIMEOUT=5s
+EMBEDDING_URL=http://localhost:11434/api/embeddings
+EMBEDDING_MODEL=all-minilm
+EMBEDDING_TIMEOUT=5s
 
 # Cache
 CACHE_SAVE_QUEUE_SIZE=1024
@@ -496,7 +500,7 @@ Current test areas include:
 
 ## Deployment
 
-### Docker (Recommended)
+### Docker
 
 This repository already includes a multi-stage `Dockerfile`.
 
@@ -532,16 +536,39 @@ Production deployment checklist:
 6. Set OTLP endpoint and verify traces/metrics ingestion
 7. Configure rolling deploy with readiness checks at infrastructure layer
 
-### Kubernetes Guidance
+### Kubernetes (Helm)
 
-No Kubernetes manifests are included currently. If deploying to Kubernetes:
+The recommended approach for deploying Aegis-LLM to production is using the provided Helm chart. The chart utilizes Kustomize-style `ConfigMap` hashing to trigger zero-downtime rolling restarts automatically when you update your environment variables.
 
-1. Deploy gateway as a `Deployment`
-2. Use `ConfigMap` for non-sensitive env vars and `Secret` for API keys
-3. Add `Service` for internal/external exposure
-4. Add `HorizontalPodAutoscaler` based on CPU and/or request rate
-5. Use managed Redis/Qdrant or dedicated StatefulSets with persistence
-6. Route OTLP to an in-cluster collector
+Navigate to the charts directory:
+
+```bash
+cd deploy/charts/aegis-llm
+```
+
+Create a values-prod.yaml file to override defaults:
+
+```yaml
+replicaCount: 3
+config:
+RATE_LIMIT_MAX_REQUESTS: "500"
+RATE_LIMIT_WINDOW: "1m"
+CACHE_ENTRY_TTL: "12h"
+CACHE_SAVE_WORKERS: "16"
+CACHE_SAVE_QUEUE_SIZE: "8192"
+TELEMETRY_EXPORTER: "otlp"
+secrets:
+create: true
+openaiApiKey: "sk-..."
+anthropicApiKey: "sk-ant-..."
+geminiApiKey: "AIza..."
+```
+
+Install the chart to your cluster:
+
+```bash
+helm upgrade --install aegis-gateway . -f values-prod.yaml --namespace gateway-system --create-namespace
+```
 
 ### Operational Runbook
 
